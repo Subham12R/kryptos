@@ -1,16 +1,14 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import {
   LayoutDashboard,
+  Wallet,
   Search,
-  Coins,
-  Users,
-  Globe,
   FileWarning,
-  MessageSquare,
-  Trophy,
   CreditCard,
   Settings,
   ChevronLeft,
@@ -21,24 +19,25 @@ import { SIDEBAR_ITEMS } from "@/lib/constants"
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard,
+  Wallet,
   Search,
-  Coins,
-  Users,
-  Globe,
   FileWarning,
-  MessageSquare,
-  Trophy,
   CreditCard,
   Settings,
 }
 
-interface SidebarProps {
-  activeItem: string
-  onItemClick: (id: string) => void
-}
-
-export default function Sidebar({ activeItem, onItemClick }: SidebarProps) {
+export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
+  const pathname = usePathname()
+  
+  const getPageId = (path: string) => {
+    if (path === "/") return "dashboard"
+    if (path.startsWith("/portfolio")) return "portfolio"
+    if (path.startsWith("/dashboard")) return "dashboard"
+    return path.slice(1) || "dashboard"
+  }
+  
+  const activeItem = getPageId(pathname)
 
   return (
     <motion.aside
@@ -46,27 +45,26 @@ export default function Sidebar({ activeItem, onItemClick }: SidebarProps) {
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen border-r border-[#1F1A2E] bg-[#05010A] transition-all duration-300",
+        "fixed left-0 top-0 z-40 h-screen border-r border-[#1A1A1A] bg-[#000000] transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
     >
       <div className="flex h-full flex-col">
-        <div className="flex h-16 items-center justify-between border-b border-[#1F1A2E] px-4">
+        <div className="flex h-16 items-center justify-between border-b border-[#1A1A1A] px-4">
           {!collapsed && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="flex items-center gap-2"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#7C3AED] to-[#A855F7]">
-                <span className="text-sm font-bold text-white">K</span>
-              </div>
-              <span className="text-lg font-bold text-[#E5E7EB]">KRYPTOS</span>
+      
+              <span className="text-lg font-bold text-white font-quicktext">KRYPTOS</span>
             </motion.div>
           )}
+       
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="rounded-lg p-1.5 text-[#9CA3AF] hover:bg-[#1F1A2E] hover:text-[#E5E7EB]"
+            className="rounded-lg p-1.5 text-[#888888] hover:bg-[#1A1A1A] hover:text-white"
           >
             {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
           </button>
@@ -80,25 +78,25 @@ export default function Sidebar({ activeItem, onItemClick }: SidebarProps) {
 
               return (
                 <li key={item.id}>
-                  <button
-                    onClick={() => onItemClick(item.id)}
+                  <Link
+                    href={item.id === "dashboard" ? "/dashboard" : item.id === "portfolio" ? "/portfolio" : `/${item.id}`}
                     className={cn(
                       "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                       isActive
-                        ? "bg-[#7C3AED]/20 text-[#A855F7]"
-                        : "text-[#9CA3AF] hover:bg-[#1F1A2E] hover:text-[#E5E7EB]"
+                        ? "bg-white/10 text-white"
+                        : "text-[#888888] hover:bg-[#1A1A1A] hover:text-white"
                     )}
                   >
                     {Icon && (
                       <span className={cn(
                         "relative flex-shrink-0",
-                        isActive && "drop-shadow-[0_0_8px_rgba(168,85,247,0.6)]"
+                        isActive && "drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]"
                       )}>
-                        <Icon className={cn("h-5 w-5", isActive && "text-[#A855F7]")} />
+                        <Icon className={cn("h-5 w-5", isActive && "text-white")} />
                         {isActive && (
                           <motion.span
                             layoutId="sidebar-glow"
-                            className="absolute -inset-1 rounded-lg bg-[#7C3AED]/30 blur-sm"
+                            className="absolute -inset-1 rounded-lg bg-white/20 blur-sm"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.3 }}
@@ -115,26 +113,26 @@ export default function Sidebar({ activeItem, onItemClick }: SidebarProps) {
                         {item.label}
                       </motion.span>
                     )}
-                  </button>
+                  </Link>
                 </li>
               )
             })}
           </ul>
         </nav>
 
-        <div className="border-t border-[#1F1A2E] p-4">
+        <div className="border-t border-[#1A1A1A] p-4">
           <div className={cn(
-            "rounded-lg bg-gradient-to-r from-[#7C3AED]/20 to-[#A855F7]/20 p-3",
+            "rounded-lg border border-[#1A1A1A] bg-[#0A0A0A] p-3",
             collapsed && "p-2"
           )}>
             {!collapsed && (
-              <p className="text-xs font-medium text-[#E5E7EB]">Pro Plan</p>
+              <p className="text-xs font-medium text-white">Pro Plan</p>
             )}
             {!collapsed && (
-              <p className="mt-1 text-xs text-[#9CA3AF]">Unlimited scans</p>
+              <p className="mt-1 text-xs text-[#888888]">Unlimited scans</p>
             )}
             {collapsed && (
-              <CreditCard className="h-5 w-5 text-[#A855F7]" />
+              <CreditCard className="h-5 w-5 text-white" />
             )}
           </div>
         </div>

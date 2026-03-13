@@ -51,9 +51,9 @@ export default function IntroSection() {
       >
         <source src="/images/bg.mp4" type="video/mp4" />
       </video>
-      
+
       <div className="absolute inset-0 bg-black/60" />
-      
+
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
 
       <span

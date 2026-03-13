@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import ThemeToggle from "@/components/ui/theme-toggle";
+import { useWallet, formatAddress } from "@/lib/wallet";
+import { Loader2, LayoutDashboard } from "lucide-react";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [isProfileConnected, setIsProfileConnected] = useState(true);
+  const { address, isConnected, isConnecting, connect, disconnect, error } = useWallet();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,35 +21,43 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navBgOpacity = scrolled ? 0.92 : 0.2;
-  const navBlur = scrolled ? 24 : 16;
+  const handleConnect = async () => {
+    try {
+      await connect();
+    } catch {
+      // Error handled in context
+    }
+  };
 
   return (
     <nav 
-      className="font-sans sticky top-0 z-50 w-full px-4 py-2.5 text-sm text-[var(--text-primary)] transition-all duration-500 sm:px-6"
+      className="font-array sticky top-0 z-50 w-full px-6 py-3 text-lg transition-all duration-500"
       style={{
-        backgroundColor: `rgba(var(--bg-primary-rgb, 255, 255, 255), ${navBgOpacity})`,
-        backdropFilter: `blur(${navBlur}px) saturate(180%)`,
-        WebkitBackdropFilter: `blur(${navBlur}px) saturate(180%)`,
+        backgroundColor: scrolled ? 'rgba(0, 0, 0, 0.95)' : 'rgba(0, 0, 0, 0.3)',
+        backdropFilter: `blur(${scrolled ? 24 : 16}px) saturate(180%)`,
+        WebkitBackdropFilter: `blur(${scrolled ? 24 : 16}px) saturate(180%)`,
       }}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-        <div className="hidden min-w-0 flex-1 items-center gap-8 lg:flex">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6">
+        <div className="hidden min-w-0 flex-1 items-center gap-10 lg:flex">
           <Link
             href="/"
             className="tracking-tight transition-all hover:opacity-50"
+            style={{ color: '#E5E7EB' }}
           >
             Home
           </Link>
           <Link
-            href="/analyze"
+            href="/wallet-scanner"
             className="tracking-tight transition-all hover:opacity-50"
+            style={{ color: '#E5E7EB' }}
           >
             Analyze
           </Link>
           <Link
             href="/services"
             className="tracking-tight transition-all hover:opacity-50"
+            style={{ color: '#E5E7EB' }}
           >
             Services
           </Link>
@@ -54,34 +65,64 @@ export default function Navbar() {
 
         <Link
           href="/"
-          className="font-quicktext flex items-center justify-center px-2 py-1 text-[1.5rem] leading-none text-[var(--text-primary)]"
+          className="font-quicktext flex items-center justify-center px-2 py-1 text-[1.5rem] leading-none"
+          style={{ color: '#E5E7EB' }}
           aria-label="Kryptos home"
         >
           Kryptos
         </Link>
 
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-3 sm:gap-5">
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-5 lg:gap-8">
+          <Link
+            href="/pricing"
+            className="tracking-tight transition-all hover:opacity-50"
+            style={{ color: '#E5E7EB' }}
+          >
+            Pricing
+          </Link>
           <Link
             href="/docs"
             className="tracking-tight transition-all hover:opacity-50"
+            style={{ color: '#E5E7EB' }}
           >
             Docs
           </Link>
-          <Link
-            href="/login"
-            className="hidden tracking-tight transition-all hover:opacity-50 sm:inline-flex"
-          >
-            Login
-          </Link>
-          <ThemeToggle />
-          <Link
-            href="/connect-wallet"
-            className="rounded-full border border-[var(--border)] bg-[var(--text-primary)] px-4 py-1.5 text-xs tracking-tight text-[var(--bg-primary)] transition-all duration-300 hover:opacity-80"
-          >
-            Connect
-          </Link>
+          
+          {isProfileConnected ? (
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition-all"
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              Dashboard
+            </Link>
+          ) : (
+            <button
+              onClick={handleConnect}
+              disabled={isConnecting}
+              className="rounded-full px-5 py-2 text-sm tracking-tight transition-all duration-300 hover:opacity-80 disabled:opacity-50"
+              style={{ 
+                backgroundColor: '#E5E7EB', 
+                color: '#000000',
+                border: '1px solid #333333'
+              }}
+            >
+              {isConnecting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Connecting...
+                </span>
+              ) : "Connect"}
+            </button>
+          )}
         </div>
       </div>
+      
+      {error && (
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-400">
+          {error}
+        </div>
+      )}
     </nav>
   );
 }

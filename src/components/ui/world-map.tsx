@@ -48,10 +48,10 @@ export default function WorldMap({
     return () => observer.disconnect();
   }, []);
 
-  const accentColor = isDark ? "#fbbf24" : "#3b82f6";
-  const mapColor = isDark ? "#ffffff40" : "#00000030";
-  const bgColor = isDark ? "#000000" : "#ffffff";
-  const dotColor = isDark ? "#ffffff" : "#000000";
+  const accentColor = "#888888";
+  const mapColor = "#333333";
+  const bgColor = "#000000";
+  const dotColor = "#555555";
   
   const svgMap = useMemo(() => {
     return map.getSVG({
@@ -143,9 +143,9 @@ export default function WorldMap({
   const formatPercent = (value: number, max: number) =>
     `${(value / max) * 100}%`;
 
-  const tooltipBg = isDark ? "#000000" : "#ffffff";
-  const tooltipBorder = isDark ? "#333333" : "#000000";
-  const tooltipText = isDark ? "#ffffff" : "#000000";
+  const tooltipBg = "#111111";
+  const tooltipBorder = "#333333";
+  const tooltipText = "#FFFFFF";
 
   return (
     <div

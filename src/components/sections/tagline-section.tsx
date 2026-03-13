@@ -9,28 +9,128 @@ import WorldMap from "@/components/ui/world-map";
 gsap.registerPlugin(ScrollTrigger);
 
 const floatingCoins = [
-  { src: "/images/coin.jpeg", alt: "Ethereum", size: 120, top: "8%", left: "82%", rotate: -12, delay: 0 },
-  { src: "/images/coin2.jpeg", alt: "Bitcoin", size: 90, top: "18%", left: "6%", rotate: 15, delay: 0.3 },
-  { src: "/images/coin.jpeg", alt: "Ethereum", size: 70, top: "55%", left: "90%", rotate: 8, delay: 0.6 },
-  { src: "/images/coin2.jpeg", alt: "Bitcoin", size: 140, top: "68%", left: "2%", rotate: -20, delay: 0.15 },
-  { src: "/images/coin.jpeg", alt: "Ethereum", size: 55, top: "38%", left: "95%", rotate: 22, delay: 0.45 },
-  { src: "/images/coin2.jpeg", alt: "Bitcoin", size: 65, top: "82%", left: "78%", rotate: -8, delay: 0.7 },
-  { src: "/images/coin.jpeg", alt: "Ethereum", size: 50, top: "5%", left: "45%", rotate: 30, delay: 0.9 },
-  { src: "/images/coin2.jpeg", alt: "Bitcoin", size: 45, top: "75%", left: "50%", rotate: -15, delay: 0.5 },
+  {
+    src: "/images/coin.jpeg",
+    alt: "Ethereum",
+    size: 120,
+    top: "8%",
+    left: "82%",
+    rotate: -12,
+    delay: 0,
+  },
+  {
+    src: "/images/coin2.jpeg",
+    alt: "Bitcoin",
+    size: 90,
+    top: "18%",
+    left: "6%",
+    rotate: 15,
+    delay: 0.3,
+  },
+  {
+    src: "/images/coin.jpeg",
+    alt: "Ethereum",
+    size: 70,
+    top: "55%",
+    left: "90%",
+    rotate: 8,
+    delay: 0.6,
+  },
+  {
+    src: "/images/coin2.jpeg",
+    alt: "Bitcoin",
+    size: 140,
+    top: "68%",
+    left: "2%",
+    rotate: -20,
+    delay: 0.15,
+  },
+  {
+    src: "/images/coin.jpeg",
+    alt: "Ethereum",
+    size: 55,
+    top: "38%",
+    left: "95%",
+    rotate: 22,
+    delay: 0.45,
+  },
+  {
+    src: "/images/coin2.jpeg",
+    alt: "Bitcoin",
+    size: 65,
+    top: "82%",
+    left: "78%",
+    rotate: -8,
+    delay: 0.7,
+  },
+  {
+    src: "/images/coin.jpeg",
+    alt: "Ethereum",
+    size: 50,
+    top: "5%",
+    left: "45%",
+    rotate: 30,
+    delay: 0.9,
+  },
+  {
+    src: "/images/coin2.jpeg",
+    alt: "Bitcoin",
+    size: 45,
+    top: "75%",
+    left: "50%",
+    rotate: -15,
+    delay: 0.5,
+  },
 ];
 
 const walletFlows = [
-  { start: { lat: 37.7749, lng: -122.4194, label: "San Francisco" }, end: { lat: 1.3521, lng: 103.8198, label: "Singapore" } },
-  { start: { lat: 51.5072, lng: -0.1276, label: "London" }, end: { lat: 25.2048, lng: 55.2708, label: "Dubai" } },
-  { start: { lat: 35.6762, lng: 139.6503, label: "Tokyo" }, end: { lat: -33.8688, lng: 151.2093, label: "Sydney" } },
-  { start: { lat: 40.7128, lng: -74.006, label: "New York" }, end: { lat: 52.52, lng: 13.405, label: "Berlin" } },
+  {
+    start: { lat: 37.7749, lng: -122.4194, label: "San Francisco" },
+    end: { lat: 1.3521, lng: 103.8198, label: "Singapore" },
+  },
+  {
+    start: { lat: 51.5072, lng: -0.1276, label: "London" },
+    end: { lat: 25.2048, lng: 55.2708, label: "Dubai" },
+  },
+  {
+    start: { lat: 35.6762, lng: 139.6503, label: "Tokyo" },
+    end: { lat: -33.8688, lng: 151.2093, label: "Sydney" },
+  },
+  {
+    start: { lat: 40.7128, lng: -74.006, label: "New York" },
+    end: { lat: 52.52, lng: 13.405, label: "Berlin" },
+  },
 ];
 
 const mapPins = [
-  { id: "sf-dex", lat: 37.7749, lng: -122.4194, title: "San Francisco DEX", detail: "$2.4M swap" },
-  { id: "singapore-otc", lat: 1.3521, lng: 103.8198, title: "Singapore OTC", detail: "USDC routing" },
-  { id: "london-bridge", lat: 51.5072, lng: -0.1276, title: "London Bridge", detail: "Cross-chain" },
-  { id: "dubai-fund", lat: 25.2048, lng: 55.2708, title: "Dubai Treasury", detail: "$980K inflow" },
+  {
+    id: "sf-dex",
+    lat: 37.7749,
+    lng: -122.4194,
+    title: "San Francisco DEX",
+    detail: "$2.4M swap",
+  },
+  {
+    id: "singapore-otc",
+    lat: 1.3521,
+    lng: 103.8198,
+    title: "Singapore OTC",
+    detail: "USDC routing",
+  },
+  {
+    id: "london-bridge",
+    lat: 51.5072,
+    lng: -0.1276,
+    title: "London Bridge",
+    detail: "Cross-chain",
+  },
+  {
+    id: "dubai-fund",
+    lat: 25.2048,
+    lng: 55.2708,
+    title: "Dubai Treasury",
+    detail: "$980K inflow",
+  },
 ];
 
 export default function TaglineSection() {
@@ -64,8 +164,8 @@ export default function TaglineSection() {
 
         if (wi < words.length - 1) {
           const space = document.createElement("span");
-          space.className = "split-char";
-          space.innerHTML = "&nbsp;";
+          space.className = "split-word";
+          space.textContent = " ";
           heading.appendChild(space);
         }
       });
@@ -186,14 +286,20 @@ export default function TaglineSection() {
 
         <h2
           ref={headingRef}
-          className="mt-8 font-sans text-6xl tracking-tight text-[var(--text-primary)]"
+          className="mt-8 max-w-full font-sans text-4xl leading-tight tracking-tight text-[var(--text-primary)] sm:text-5xl lg:text-6xl"
         >
-          Kryptos connects wallet flows, risk signals, and compliance data into a unified intelligence layer — so threats are caught before damage is done.
+          Kryptos connects wallet flows, risk signals, and compliance data into
+          one intelligence layer — catching threats before they escalate.
         </h2>
 
-        <div ref={bodyRef} className="mt-12 grid gap-8 font-sans sm:grid-cols-3">
+        <div
+          ref={bodyRef}
+          className="mt-12 grid gap-8 font-sans sm:grid-cols-3"
+        >
           <div>
-            <p className="text-lg font-medium text-[var(--text-primary)]">Investigators</p>
+            <p className="text-lg font-medium text-[var(--text-primary)]">
+              Investigators
+            </p>
             <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
               Trace fund flows across 14 chains with graph-based behavioral
               analysis and ML-scored risk.
@@ -219,7 +325,10 @@ export default function TaglineSection() {
           </div>
         </div>
 
-        <div ref={mapRef} className="mt-16 rounded-2xl border border-[var(--border)] overflow-hidden shadow-xl">
+        <div
+          ref={mapRef}
+          className="mt-16 rounded-2xl border border-[var(--border)] overflow-hidden shadow-xl"
+        >
           <WorldMap
             dots={walletFlows}
             pins={mapPins}
