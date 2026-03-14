@@ -309,7 +309,7 @@ export default function Footer() {
 
             {/* Discord */}
             <a
-              href="https://discord.gg/kryptos"
+              href="https://discord.gg/CpVk7KGz"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Discord"

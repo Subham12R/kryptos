@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI, Query, Body, Depends, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 import time
 from collections import defaultdict
 import threading
@@ -14,9 +14,11 @@ import string
 from collections import Counter
 from datetime import datetime
 from typing import List, Optional
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env from project root (works when run from backend/ or project root)
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 # ── Database + Auth ──────────────────────────────────────────────────────────
 try:
@@ -876,8 +878,15 @@ def flagged_addresses(min_reports: int = Query(default=2, ge=1)):
 
 @app.post("/batch")
 @limiter.limit("3/minute")
-def batch_analysis(request: Request, req: BatchRequest):
+def batch_analysis(request: Request, payload: dict = Body(...)):
     """Analyze multiple addresses in one request (max 50)."""
+    try:
+        req = BatchRequest.model_validate(payload)
+    except AttributeError:
+        req = BatchRequest.parse_obj(payload)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=json.loads(exc.json()))
+
     return analyze_batch(
         addresses=req.addresses,
         chain_id=req.chain_id,
@@ -927,8 +936,15 @@ def contract_security_audit(
 
 @app.post("/batch/csv")
 @limiter.limit("3/minute")
-def batch_csv_analysis(request: Request, req: BatchCsvRequest):
+def batch_csv_analysis(request: Request, payload: dict = Body(...)):
     """Analyze addresses from CSV content."""
+    try:
+        req = BatchCsvRequest.model_validate(payload)
+    except AttributeError:
+        req = BatchCsvRequest.parse_obj(payload)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=json.loads(exc.json()))
+
     addresses = parse_csv_addresses(req.csv_content)
     if not addresses:
         return {"error": "No valid addresses found in CSV"}

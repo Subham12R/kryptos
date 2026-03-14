@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
   AlertTriangle,
@@ -92,6 +92,7 @@ interface FactorData {
 
 export default function WalletScannerPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isAuthenticated } = useSession();
   const [walletAddress, setWalletAddress] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -112,6 +113,22 @@ export default function WalletScannerPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    const paramAddress = searchParams.get("address")?.trim() || "";
+    const paramChain = Number(searchParams.get("chain") || "");
+
+    if (paramAddress && /^0x[a-fA-F0-9]{40}$/.test(paramAddress)) {
+      setWalletAddress(paramAddress);
+    }
+
+    if (
+      Number.isFinite(paramChain) &&
+      CHAINS.some((chain) => chain.id === paramChain)
+    ) {
+      setSelectedChainId(paramChain);
+    }
+  }, [searchParams]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -770,7 +787,7 @@ export default function WalletScannerPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {analysis.top_counterparties
+                        {(analysis.top_counterparties || [])
                           .slice(0, 8)
                           .map((cp, i) => (
                             <tr
@@ -797,6 +814,17 @@ export default function WalletScannerPage() {
                               </td>
                             </tr>
                           ))}
+                        {(!analysis.top_counterparties ||
+                          analysis.top_counterparties.length === 0) && (
+                          <tr>
+                            <td
+                              colSpan={6}
+                              className="py-4 text-center text-sm text-gray-500"
+                            >
+                              No counterparties available
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -816,7 +844,7 @@ export default function WalletScannerPage() {
                   </div>
 
                   <div className="space-y-3">
-                    {analysis.timeline
+                    {(analysis.timeline || [])
                       .slice(-10)
                       .reverse()
                       .map((entry, i) => (
@@ -857,6 +885,11 @@ export default function WalletScannerPage() {
                           </div>
                         </div>
                       ))}
+                    {(!analysis.timeline || analysis.timeline.length === 0) && (
+                      <p className="text-center text-sm text-gray-500">
+                        No timeline data available
+                      </p>
+                    )}
                   </div>
                 </motion.div>
               </div>

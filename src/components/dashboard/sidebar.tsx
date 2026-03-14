@@ -1,23 +1,24 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { motion } from "framer-motion"
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Wallet,
   Search,
   FileWarning,
   CreditCard,
+  Zap,
   Settings,
   ChevronLeft,
   ChevronRight,
   User,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import { SIDEBAR_ITEMS } from "@/lib/constants"
-import { useSession } from "@/lib/session"
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { SIDEBAR_ITEMS } from "@/lib/constants";
+import { useSession } from "@/lib/session";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard,
@@ -25,26 +26,27 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Search,
   FileWarning,
   CreditCard,
+  Zap,
   Settings,
   User,
-}
+};
 
 export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false)
-  const pathname = usePathname()
-  const { user, isAuthenticated } = useSession()
-  
-  const getPageId = (path: string) => {
-    if (path === "/") return "dashboard"
-    if (path.startsWith("/portfolio")) return "portfolio"
-    if (path.startsWith("/dashboard")) return "dashboard"
-    return path.slice(1) || "dashboard"
-  }
-  
-  const activeItem = getPageId(pathname)
+  const [collapsed, setCollapsed] = useState(false);
+  const pathname = usePathname();
+  const { user, isAuthenticated } = useSession();
 
-  const userTier = user?.premium_tier || "free"
-  const isPro = userTier === "pro" || userTier === "enterprise"
+  const getPageId = (path: string) => {
+    if (path === "/") return "dashboard";
+    if (path.startsWith("/portfolio")) return "portfolio";
+    if (path.startsWith("/dashboard")) return "dashboard";
+    return path.slice(1) || "dashboard";
+  };
+
+  const activeItem = getPageId(pathname);
+
+  const userTier = user?.premium_tier || "free";
+  const isPro = userTier === "pro" || userTier === "enterprise";
 
   return (
     <motion.aside
@@ -53,7 +55,7 @@ export default function Sidebar() {
       transition={{ duration: 0.5, ease: "easeOut" }}
       className={cn(
         "fixed left-0 top-0 z-40 h-screen border-r border-[#1A1A1A] bg-[#000000] transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        collapsed ? "w-16" : "w-64",
       )}
     >
       <div className="flex h-full flex-col">
@@ -64,13 +66,15 @@ export default function Sidebar() {
               animate={{ opacity: 1 }}
               className="flex items-center gap-2"
             >
-      
-              <Link href="/" className="text-lg font-bold text-white font-quicktext">
+              <Link
+                href="/"
+                className="text-lg font-bold text-white font-quicktext"
+              >
                 KRYPTOS
               </Link>
             </motion.div>
           )}
-       
+
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="rounded-lg p-1.5 text-[#888888] hover:bg-[#1A1A1A] hover:text-white"
@@ -82,26 +86,37 @@ export default function Sidebar() {
         <nav className="flex-1 overflow-y-auto py-4">
           <ul className="space-y-1 px-2">
             {SIDEBAR_ITEMS.map((item) => {
-              const Icon = iconMap[item.icon]
-              const isActive = activeItem === item.id
+              const Icon = iconMap[item.icon];
+              const isActive = activeItem === item.id;
 
               return (
                 <li key={item.id}>
                   <Link
-                    href={item.id === "dashboard" ? "/dashboard" : item.id === "portfolio" ? "/portfolio" : `/${item.id}`}
+                    href={
+                      item.id === "dashboard"
+                        ? "/dashboard"
+                        : item.id === "portfolio"
+                          ? "/portfolio"
+                          : `/${item.id}`
+                    }
                     className={cn(
                       "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                       isActive
                         ? "bg-white/10 text-white"
-                        : "text-[#888888] hover:bg-[#1A1A1A] hover:text-white"
+                        : "text-[#888888] hover:bg-[#1A1A1A] hover:text-white",
                     )}
                   >
                     {Icon && (
-                      <span className={cn(
-                        "relative flex-shrink-0",
-                        isActive && "drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]"
-                      )}>
-                        <Icon className={cn("h-5 w-5", isActive && "text-white")} />
+                      <span
+                        className={cn(
+                          "relative flex-shrink-0",
+                          isActive &&
+                            "drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]",
+                        )}
+                      >
+                        <Icon
+                          className={cn("h-5 w-5", isActive && "text-white")}
+                        />
                         {isActive && (
                           <motion.span
                             layoutId="sidebar-glow"
@@ -124,16 +139,18 @@ export default function Sidebar() {
                     )}
                   </Link>
                 </li>
-              )
+              );
             })}
           </ul>
         </nav>
 
         <div className="border-t border-[#1A1A1A] p-4">
-          <div className={cn(
-            "rounded-lg border border-[#1A1A1A] bg-[#0A0A0A] p-3",
-            collapsed && "p-2"
-          )}>
+          <div
+            className={cn(
+              "rounded-lg border border-[#1A1A1A] bg-[#0A0A0A] p-3",
+              collapsed && "p-2",
+            )}
+          >
             {!collapsed && (
               <p className="text-xs font-medium text-white">
                 {isPro ? "Pro Plan" : "Free Plan"}
@@ -145,11 +162,16 @@ export default function Sidebar() {
               </p>
             )}
             {collapsed && (
-              <CreditCard className={cn("h-5 w-5", isPro ? "text-[#00FF94]" : "text-white")} />
+              <CreditCard
+                className={cn(
+                  "h-5 w-5",
+                  isPro ? "text-[#00FF94]" : "text-white",
+                )}
+              />
             )}
           </div>
         </div>
       </div>
     </motion.aside>
-  )
+  );
 }
