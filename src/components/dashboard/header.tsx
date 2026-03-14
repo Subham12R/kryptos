@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Search, Bell, X, User, Wallet, ChevronDown, Plus, Trash2, LogOut } from "lucide-react"
+import { Search, Bell, X, User, Wallet, ChevronDown, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useWallet } from "@/lib/wallet"
 import { useSession } from "@/lib/session"
@@ -14,7 +14,7 @@ export default function Header() {
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false)
   const walletDropdownRef = useRef<HTMLDivElement>(null)
   
-  const { address, isConnected, linkedWallets, selectedWallet, connect, disconnect, addWallet, switchWallet, removeWallet } = useWallet()
+  const { address, isConnected, linkedWallets, selectedWallet, connect, disconnect, switchWallet } = useWallet()
   const { user } = useSession()
 
   // Close wallet dropdown when clicking outside
@@ -110,18 +110,6 @@ export default function Header() {
                       ))}
                     </div>
                   )}
-
-                  {/* Add Wallet */}
-                  <button
-                    onClick={() => {
-                      addWallet()
-                      setWalletDropdownOpen(false)
-                    }}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-white hover:bg-[#1A1A1A]"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Another Wallet
-                  </button>
 
                   {/* Disconnect */}
                   <button

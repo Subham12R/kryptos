@@ -9,7 +9,7 @@ import { Loader2, LayoutDashboard } from "lucide-react";
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const { isAuthenticated, user } = useSession();
-  const { address, isConnected, isConnecting, connect, disconnect, error } =
+  const { address, isConnected, isConnecting, connect, disconnect } =
     useWallet();
 
   const isProfileConnected = isAuthenticated || isConnected;
@@ -110,12 +110,6 @@ export default function Navbar() {
           )}
         </div>
       </div>
-
-      {error && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-400">
-          {error}
-        </div>
-      )}
     </nav>
   );
 }

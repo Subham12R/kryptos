@@ -19,6 +19,7 @@ import {
   Activity,
   Globe,
   GitBranch,
+  ShieldCheck,
   Share2,
   LayoutDashboard,
   Lock,
@@ -104,6 +105,30 @@ export default function WalletScannerPage() {
   const [selectedChainId, setSelectedChainId] = useState(1);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [hoveredChain, setHoveredChain] = useState<number | null>(null);
+  const [onChainCheck, setOnChainCheck] = useState<{
+    loading: boolean;
+    result: { on_chain: boolean; risk_score?: number; ipfs_hash?: string; ipfs_cid?: string; contract?: string } | null;
+    error: string | null;
+  }>({ loading: false, result: null, error: null });
+
+  const handleCheckOnChain = async () => {
+    if (!analysis?.address) return;
+    setOnChainCheck({ loading: true, result: null, error: null });
+    try {
+      const report = await api.report(analysis.address);
+      setOnChainCheck({
+        loading: false,
+        result: report,
+        error: report.error || null,
+      });
+    } catch (err) {
+      setOnChainCheck({
+        loading: false,
+        result: null,
+        error: err instanceof Error ? err.message : "Failed to check on-chain",
+      });
+    }
+  };
 
   const isFreeUser = !user || user.premium_tier === "free";
   const availableChains = isFreeUser
@@ -139,6 +164,7 @@ export default function WalletScannerPage() {
     setError(null);
     setAnalysis(null);
     setTokens(null);
+    setOnChainCheck({ loading: false, result: null, error: null });
 
     try {
       const [analysisResult, tokensResult] = await Promise.all([
@@ -714,11 +740,25 @@ export default function WalletScannerPage() {
                     transition={{ delay: 0.4 }}
                     className="rounded-xl border border-[#1A1A1A] bg-[#0A0A0A] p-6"
                   >
-                    <div className="mb-4 flex items-center gap-2">
-                      <GitBranch className="h-5 w-5 text-white" />
-                      <h2 className="text-lg font-semibold text-white">
-                        On-Chain
-                      </h2>
+                    <div className="mb-4 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <GitBranch className="h-5 w-5 text-white" />
+                        <h2 className="text-lg font-semibold text-white">
+                          On-Chain
+                        </h2>
+                      </div>
+                      <button
+                        onClick={handleCheckOnChain}
+                        disabled={onChainCheck.loading}
+                        className="flex items-center gap-2 rounded-lg border border-[#1A1A1A] bg-[#111111] px-3 py-1.5 text-xs text-[#00FF94] hover:border-[#00FF94]/50 hover:bg-[#00FF94]/5 disabled:opacity-50"
+                      >
+                        {onChainCheck.loading ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <ShieldCheck className="h-3.5 w-3.5" />
+                        )}
+                        Check Risk Registry
+                      </button>
                     </div>
                     <div className="space-y-3">
                       <div className="flex justify-between">
@@ -755,6 +795,56 @@ export default function WalletScannerPage() {
                           <span className="font-medium text-[#00FF94]">
                             Stored
                           </span>
+                        </div>
+                      )}
+                      {onChainCheck.result && (
+                        <div className="mt-3 rounded-lg border border-[#1A1A1A] bg-[#0A0A0A] p-3">
+                          {onChainCheck.result.on_chain ? (
+                            <div className="space-y-2">
+                              <p className="flex items-center gap-2 text-sm font-medium text-[#00FF94]">
+                                <ShieldCheck className="h-4 w-4" />
+                                Stored on-chain
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {onChainCheck.result.risk_score !== undefined && (
+                                  <span className="rounded bg-white/5 px-2 py-0.5 text-xs text-gray-400">
+                                    Risk: {onChainCheck.result.risk_score}
+                                  </span>
+                                )}
+                                {(onChainCheck.result.ipfs_hash || onChainCheck.result.ipfs_cid) && (
+                                  <a
+                                    href={`https://gateway.pinata.cloud/ipfs/${onChainCheck.result.ipfs_hash || onChainCheck.result.ipfs_cid}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 rounded bg-white/5 px-2 py-0.5 text-xs text-[#00FF94] hover:underline"
+                                  >
+                                    View on IPFS
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                )}
+                                {onChainCheck.result.contract && (
+                                  <a
+                                    href={`https://sepolia.basescan.org/address/${onChainCheck.result.contract}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 rounded bg-white/5 px-2 py-0.5 text-xs text-gray-400 hover:text-white"
+                                  >
+                                    Contract
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="flex items-center gap-2 text-sm text-gray-400">
+                              Not stored on-chain
+                              {onChainCheck.error && (
+                                <span className="text-xs text-red-400">
+                                  ({onChainCheck.error})
+                                </span>
+                              )}
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>

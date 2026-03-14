@@ -17,8 +17,11 @@ from typing import List, Optional
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load .env from project root (works when run from backend/ or project root)
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+# Load .env from backend/ and project root (works when run from backend/ or project root)
+_backend_dir = Path(__file__).resolve().parent
+_project_root = _backend_dir.parent
+load_dotenv(_project_root / ".env")
+load_dotenv(_backend_dir / ".env", override=True)  # backend/.env wins (has DATABASE_URL)
 
 # ── Database + Auth ──────────────────────────────────────────────────────────
 try:

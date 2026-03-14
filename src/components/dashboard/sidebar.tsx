@@ -60,20 +60,22 @@ export default function Sidebar() {
     >
       <div className="flex h-full flex-col">
         <div className="flex h-16 items-center justify-between border-b border-[#1A1A1A] px-4">
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex items-center gap-2"
-            >
-              <Link
-                href="/"
-                className="text-lg font-bold text-white font-quicktext"
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-white hover:text-white/90"
+          >
+            {collapsed ? (
+              <span className="font-quicktext text-xl font-bold">K</span>
+            ) : (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="font-quicktext text-lg font-bold"
               >
                 KRYPTOS
-              </Link>
-            </motion.div>
-          )}
+              </motion.span>
+            )}
+          </Link>
 
           <button
             onClick={() => setCollapsed(!collapsed)}

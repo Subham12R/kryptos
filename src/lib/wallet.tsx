@@ -149,7 +149,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // Link a wallet to the user's account (requires signature)
-  const linkWallet = useCallback(async (walletAddress: string): Promise<boolean> => {
+  // signerOverride: pass when calling from connect() since state won't have updated yet
+  const linkWallet = useCallback(async (
+    walletAddress: string,
+    signerOverride?: JsonRpcSigner
+  ): Promise<boolean> => {
     setIsAuthenticating(true)
     try {
       // Request nonce
@@ -165,11 +169,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       
       const { message } = await nonceResponse.json()
       
-      // Sign the message
-      if (!signer) {
+      // Sign the message (use override when called from connect before state updates)
+      const activeSigner = signerOverride ?? signer
+      if (!activeSigner) {
         throw new Error("No signer available")
       }
-      const signature = await signer.signMessage(message)
+      const signature = await activeSigner.signMessage(message)
       
       // Verify and link wallet
       const verifyResponse = await fetch(`${API_BASE_URL}/auth/link-wallet`, {
@@ -340,7 +345,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           }
         } else {
           // Wallet not linked - need to link it (will trigger signature)
-          const success = await linkWallet(userAddress)
+          // Pass userSigner directly - state won't have updated yet
+          const success = await linkWallet(userAddress, userSigner)
           if (success) {
             // Get token after linking
             try {

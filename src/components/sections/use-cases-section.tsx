@@ -51,27 +51,6 @@ const useCases = [
   },
   {
     id: "03",
-    title: "Smart Contract Auditing",
-    description:
-      "Automated security audit with severity-classified findings (Critical/High/Medium/Low) and a letter grade from A+ to F.",
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className="h-7 w-7"
-      >
-        <path
-          d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
-  },
-  {
-    id: "04",
     title: "Fund Flow Tracing",
     description:
       "Trace the path of stolen funds through multiple intermediary wallets up to 5 hops deep across all 14 supported EVM chains.",
@@ -92,7 +71,7 @@ const useCases = [
     ),
   },
   {
-    id: "05",
+    id: "04",
     title: "Chrome Extension",
     description:
       "Coming soon: hover over any address on Etherscan, BscScan, or PolygonScan and see its risk score instantly without leaving the page.",
@@ -113,7 +92,7 @@ const useCases = [
     ),
   },
   {
-    id: "06",
+    id: "05",
     title: "On-Chain Risk Registry",
     description:
       "Every analysis is stored on Base Sepolia, creating a permanent, public, decentralized database of wallet risk scores.",
