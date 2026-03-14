@@ -6,6 +6,7 @@ import PageLoader from "@/components/ui/page-loader"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import ClientLayout from "@/components/layout/client-layout"
 import { WalletProvider } from "@/lib/wallet"
+import { SessionProvider } from "@/lib/session"
 
 export const metadata: Metadata = {
   title: "Kryptos — Onchain Intelligence",
@@ -22,14 +23,16 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
         <ThemeProvider>
-          <WalletProvider>
-            <PageLoader />
-            <LenisProvider>
-              <ClientLayout>
-                {children}
-              </ClientLayout>
-            </LenisProvider>
-          </WalletProvider>
+          <SessionProvider>
+            <WalletProvider>
+              <PageLoader />
+              <LenisProvider>
+                <ClientLayout>
+                  {children}
+                </ClientLayout>
+              </LenisProvider>
+            </WalletProvider>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

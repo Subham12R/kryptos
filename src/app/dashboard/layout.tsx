@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import "@/app/globals.css"
+import PersistentBanner from "@/components/dashboard/persistent-banner"
 
 export const metadata: Metadata = {
   title: "KRYPTOS — Blockchain Intelligence Dashboard",
@@ -13,8 +14,9 @@ export default function DashboardLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="antialiased">{children}</body>
-    </html>
+    <>
+      {children}
+      <PersistentBanner />
+    </>
   )
 }

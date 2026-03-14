@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Chart, ChartConfiguration, registerables } from "chart.js"
 
 Chart.register(...registerables)
@@ -12,8 +12,20 @@ interface TransactionFlowChartProps {
 export default function TransactionFlowChart({ timeline = [] }: TransactionFlowChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null)
   const chartInstanceRef = useRef<Chart | null>(null)
+  const [timeRange, setTimeRange] = useState<"12" | "6" | "1">("12")
 
   const hasData = timeline.length > 0
+
+  const getFilteredData = () => {
+    if (!hasData) return { labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], data: Array(12).fill(0) }
+    
+    const months = parseInt(timeRange)
+    const filtered = timeline.slice(-months)
+    return {
+      labels: filtered.map(t => t.date.slice(5)),
+      data: filtered.map(t => t.volume * 1800 / 1000000)
+    }
+  }
 
   useEffect(() => {
     if (!chartRef.current) return
@@ -25,13 +37,7 @@ export default function TransactionFlowChart({ timeline = [] }: TransactionFlowC
     const ctx = chartRef.current.getContext("2d")
     if (!ctx) return
 
-    const labels = hasData 
-      ? timeline.map(t => t.date.slice(5))
-      : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    
-    const data = hasData 
-      ? timeline.map(t => t.volume * 1800 / 1000000)
-      : Array(12).fill(0)
+    const { labels, data } = getFilteredData()
 
     const gradient = ctx.createLinearGradient(0, 0, 0, 300)
     gradient.addColorStop(0, "rgba(255, 255, 255, 0.3)")
@@ -133,21 +139,26 @@ export default function TransactionFlowChart({ timeline = [] }: TransactionFlowC
         chartInstanceRef.current.destroy()
       }
     }
-  }, [])
+  }, [timeRange, timeline])
 
-  const totalVolume = hasData ? timeline.reduce((acc, t) => acc + t.volume * 1800, 0) : 0
-  const totalTx = hasData ? timeline.reduce((acc, t) => acc + t.tx_count, 0) : 0
-  const avgDaily = hasData && timeline.length > 0 ? totalVolume / timeline.length : 0
+  const filteredTimeline = hasData ? timeline.slice(-parseInt(timeRange)) : []
+  const totalVolume = filteredTimeline.reduce((acc, t) => acc + t.volume * 1800, 0)
+  const totalTx = filteredTimeline.reduce((acc, t) => acc + t.tx_count, 0)
+  const avgDaily = filteredTimeline.length > 0 ? totalVolume / filteredTimeline.length : 0
 
   return (
     <div className="flex flex-col rounded-xl border border-[#1A1A1A] bg-[#0A0A0A] p-6">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-400">Transaction Flow Analysis</h3>
-        {hasData && (
-          <select className="rounded-lg border border-[#1A1A1A] bg-[#1A1A1A] px-3 py-1.5 text-xs text-white">
-            <option>Last 12 months</option>
-            <option>Last 6 months</option>
-            <option>Last 30 days</option>
+          {hasData && (
+          <select 
+            value={timeRange} 
+            onChange={(e) => setTimeRange(e.target.value as "12" | "6" | "1")}
+            className="rounded-lg border border-[#1A1A1A] bg-[#1A1A1A] px-3 py-1.5 text-xs text-white"
+          >
+            <option value="12">Last 12 months</option>
+            <option value="6">Last 6 months</option>
+            <option value="1">Last 30 days</option>
           </select>
         )}
       </div>

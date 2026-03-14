@@ -341,7 +341,7 @@ function DashboardContent() {
                 transition={{ delay: 0.7 }}
               >
                 <CounterpartiesTable />
-              </motion.div>
+                </motion.div>
             </div>
           )}
 

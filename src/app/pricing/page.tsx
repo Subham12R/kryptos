@@ -1,10 +1,14 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { Check, X, Zap, Shield, Globe, CreditCard, Users, FileText, Server, ChevronRight, ArrowRight, CheckCircle2 } from "lucide-react"
+import { useSession } from "@/lib/session"
+import { Check, X, Zap, Shield, Globe, CreditCard, Users, FileText, Server, ChevronRight, ArrowRight, CheckCircle2, Crown, Loader2, User } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
 const sidebarItems = [
   { id: "dashboard", label: "Dashboard", icon: "LayoutDashboard", href: "/dashboard" },
@@ -28,86 +32,6 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Trophy: ({ className }: { className?: string }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m6 9 6 6 6-6" /><path d="M12 15V3" /><path d="M22 10H2" /></svg>,
   CreditCard: ({ className }: { className?: string }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="20" height="14" x="2" y="5" rx="2" /><path d="M2 10h20" /></svg>,
   Settings: ({ className }: { className?: string }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>,
-}
-
-function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false)
-  const pathname = "/pricing"
-
-  const getPageId = (path: string) => {
-    if (path === "/") return "dashboard"
-    if (path.startsWith("/portfolio")) return "portfolio"
-    if (path.startsWith("/dashboard")) return "dashboard"
-    return path.slice(1) || "dashboard"
-  }
-
-  const activeItem = getPageId(pathname)
-
-  return (
-    <motion.aside
-      initial={{ x: -100, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className={cn(
-        "fixed left-0 top-0 z-40 h-screen border-r border-[#1A1A1A] bg-black transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
-      <div className="flex h-full flex-col">
-        <div className="flex h-16 items-center justify-between border-b border-[#1A1A1A] px-4">
-          {!collapsed && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white">
-                <span className="text-sm font-bold text-black">K</span>
-              </div>
-              <span className="text-lg font-bold text-white font-quicktext">KRYPTOS</span>
-            </motion.div>
-          )}
-          {collapsed && (
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white">
-              <span className="text-sm font-bold text-black">K</span>
-            </div>
-          )}
-          <button onClick={() => setCollapsed(!collapsed)} className="rounded-lg p-1.5 text-[#888888] hover:bg-[#1A1A1A] hover:text-white">
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronRight className="h-4 w-4 rotate-180" />}
-          </button>
-        </div>
-        <nav className="flex-1 overflow-y-auto py-4">
-          <ul className="space-y-1 px-2">
-            {sidebarItems.map((item) => {
-              const Icon = iconMap[item.icon]
-              const isActive = activeItem === item.id
-              return (
-                <li key={item.id}>
-                  <Link href={item.href} className={cn("group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200", isActive ? "bg-white/10 text-white" : "text-[#888888] hover:bg-[#1A1A1A] hover:text-white")}>
-                    <span className="relative flex-shrink-0"><Icon className={cn("h-5 w-5", isActive && "text-white")} /></span>
-                    {!collapsed && <span>{item.label}</span>}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </nav>
-        <div className="border-t border-[#1A1A1A] p-4">
-          <div className={cn("rounded-lg border border-[#1A1A1A] bg-[#0A0A0A] p-3", collapsed && "p-2")}>
-            {!collapsed && <><p className="text-xs font-medium text-white">Pro Plan</p><p className="mt-1 text-xs text-[#888888]">Unlimited scans</p></>}
-            {collapsed && <CreditCard className="h-5 w-5 text-white" />}
-          </div>
-        </div>
-      </div>
-    </motion.aside>
-  )
-}
-
-function Header() {
-  return (
-    <header className="fixed top-0 right-0 z-30 flex h-16 items-center justify-between border-b border-[#1A1A1A] bg-black/95 px-6 backdrop-blur-sm" style={{ left: "16rem" }}>
-      <div className="flex items-center gap-4">
-        <input type="text" placeholder="Search..." className="h-9 w-64 rounded-lg border border-[#1A1A1A] bg-[#0A0A0A] px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-white focus:outline-none" />
-      </div>
-      <button className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black hover:bg-gray-200">Connect Wallet</button>
-    </header>
-  )
 }
 
 const plans = [
@@ -145,7 +69,7 @@ const plans = [
       { name: "On-chain reports", included: true },
     ],
     notIncluded: ["API access", "Priority support"],
-    cta: "Start Free Trial",
+    cta: "Subscribe Now",
     ctaVariant: "solid",
   },
   {
@@ -200,17 +124,75 @@ const apiPlans = [
 const faqs = [
   { q: "Can I cancel anytime?", a: "Yes, you can cancel your subscription at any time. No questions asked." },
   { q: "What payment methods do you accept?", a: "We accept all major credit cards, crypto payments, and wire transfers for Enterprise." },
-  { q: "Is there a free trial?", a: "Yes! Pro plans come with a 7-day free trial. No credit card required." },
+  { q: "Is there a refund policy?", a: "Yes, we offer a 30-day money-back guarantee for all paid plans." },
   { q: "Can I upgrade or downgrade?", a: "Absolutely. Switch between plans anytime. We'll prorate your billing." },
 ]
 
 export default function PricingPage() {
+  const router = useRouter()
+  const { isAuthenticated, token, user } = useSession()
+  const [isUpgrading, setIsUpgrading] = useState(false)
+
+  const handlePlanClick = async (planName: string) => {
+    if (planName === "Free") {
+      router.push("/dashboard")
+      return
+    }
+
+    if (!isAuthenticated || !token) {
+      router.push("/auth")
+      return
+    }
+
+    const tierMap: Record<string, string> = {
+      "Pro": "pro",
+      "Enterprise": "enterprise",
+    }
+
+    const tier = tierMap[planName]
+    if (!tier) return
+
+    setIsUpgrading(true)
+    try {
+      console.log("Creating checkout for tier:", tier)
+      const response = await fetch(`${API_BASE_URL}/auth/upgrade`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ tier }),
+      })
+
+      console.log("Response status:", response.status)
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error("Upgrade error:", errorData)
+        alert(`Error: ${errorData.detail || "Failed to create checkout"}`)
+        return
+      }
+
+      const data = await response.json()
+      console.log("Checkout URL:", data.checkout_url)
+      
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url
+      } else {
+        console.error("No checkout URL in response:", data)
+        alert("Failed to get checkout URL")
+      }
+    } catch (error) {
+      console.error("Upgrade error:", error)
+      alert("An error occurred. Please try again.")
+    } finally {
+      setIsUpgrading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-black">
-      <Sidebar />
-      <Header />
-      <main className="pt-16" style={{ marginLeft: "16rem" }}>
-        {/* Hero Section */}
+      {/* Hero Section */}
         <section className="relative overflow-hidden py-20">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.05)_0%,_transparent_70%)]" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full blur-[100px]" />
@@ -273,13 +255,25 @@ export default function PricingPage() {
                     ))}
                   </ul>
 
-                  <button className={cn(
-                    "mt-6 w-full rounded-lg py-3 text-sm font-medium transition-all",
-                    plan.ctaVariant === "solid" 
-                      ? "bg-white text-black hover:bg-gray-200" 
-                      : "border border-white/20 text-white hover:bg-white/10"
-                  )}>
-                    {plan.cta}
+                  <button 
+                    onClick={() => handlePlanClick(plan.name)}
+                    className={cn(
+                      "mt-6 w-full rounded-lg py-3 text-sm font-medium transition-all",
+                      plan.ctaVariant === "solid" 
+                        ? "bg-white text-black hover:bg-gray-200" 
+                        : "border border-white/20 text-white hover:bg-white/10",
+                      isUpgrading && "opacity-50 cursor-not-allowed"
+                    )}
+                    disabled={isUpgrading}
+                  >
+                    {isUpgrading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Processing...
+                      </span>
+                    ) : (
+                      plan.cta
+                    )}
                   </button>
                 </motion.div>
               ))}
@@ -393,7 +387,6 @@ export default function PricingPage() {
             <p className="text-xs text-gray-600">© 2026 KRYPTOS. Blockchain Intelligence Platform.</p>
           </div>
         </footer>
-      </main>
-    </div>
-  )
+      </div>
+    )
 }

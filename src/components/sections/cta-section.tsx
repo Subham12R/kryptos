@@ -132,10 +132,10 @@ export default function CtaSection() {
 
         <div ref={buttonsRef} className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <Link
-            href="/connect-wallet"
+            href="/auth"
             className="rounded-full bg-[var(--text-primary)] px-8 py-3.5 font-sans text-sm tracking-tight text-[var(--bg-primary)] shadow-[0_4px_16px_rgba(0,0,0,0.15)] transition hover:opacity-80 hover:shadow-[0_6px_24px_rgba(0,0,0,0.2)]"
           >
-            Connect Wallet
+            Get Started
           </Link>
           <Link
             href="/docs"

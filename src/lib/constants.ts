@@ -31,6 +31,7 @@ export const SIDEBAR_ITEMS = [
   { id: "wallet-scanner", label: "Wallet Scanner", icon: "Search" },
   { id: "risk-reports", label: "Risk Reports", icon: "FileWarning" },
   { id: "pricing", label: "Pricing", icon: "CreditCard" },
+  { id: "profile", label: "Profile", icon: "User" },
   { id: "settings", label: "Settings", icon: "Settings" },
 ] as const
 

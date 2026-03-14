@@ -13,9 +13,11 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  User,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SIDEBAR_ITEMS } from "@/lib/constants"
+import { useSession } from "@/lib/session"
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard,
@@ -24,11 +26,13 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   FileWarning,
   CreditCard,
   Settings,
+  User,
 }
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
+  const { user, isAuthenticated } = useSession()
   
   const getPageId = (path: string) => {
     if (path === "/") return "dashboard"
@@ -38,6 +42,9 @@ export default function Sidebar() {
   }
   
   const activeItem = getPageId(pathname)
+
+  const userTier = user?.premium_tier || "free"
+  const isPro = userTier === "pro" || userTier === "enterprise"
 
   return (
     <motion.aside
@@ -58,7 +65,9 @@ export default function Sidebar() {
               className="flex items-center gap-2"
             >
       
-              <span className="text-lg font-bold text-white font-quicktext">KRYPTOS</span>
+              <Link href="/" className="text-lg font-bold text-white font-quicktext">
+                KRYPTOS
+              </Link>
             </motion.div>
           )}
        
@@ -126,13 +135,17 @@ export default function Sidebar() {
             collapsed && "p-2"
           )}>
             {!collapsed && (
-              <p className="text-xs font-medium text-white">Pro Plan</p>
+              <p className="text-xs font-medium text-white">
+                {isPro ? "Pro Plan" : "Free Plan"}
+              </p>
             )}
             {!collapsed && (
-              <p className="mt-1 text-xs text-[#888888]">Unlimited scans</p>
+              <p className="mt-1 text-xs text-[#888888]">
+                {isPro ? "Unlimited access" : "5 scans/day"}
+              </p>
             )}
             {collapsed && (
-              <CreditCard className="h-5 w-5 text-white" />
+              <CreditCard className={cn("h-5 w-5", isPro ? "text-[#00FF94]" : "text-white")} />
             )}
           </div>
         </div>

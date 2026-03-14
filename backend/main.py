@@ -29,10 +29,18 @@ except ModuleNotFoundError:
     from auth.watchlist_routes import router as watchlist_router
 
 try:
-    from backend.ml.config import CHAIN_ID, ETHERSCAN_API_KEY, SUPPORTED_CHAINS, get_chain_by_id
+    from backend.ml.config import (
+        CHAIN_ID,
+        ETHERSCAN_API_KEY,
+        SUPPORTED_CHAINS,
+        get_chain_by_id,
+    )
     from backend.ml.fetcher import (
-        fetch_transactions, fetch_internal_transactions,
-        fetch_token_transfers, discover_neighbors, fetch_neighbor_transactions,
+        fetch_transactions,
+        fetch_internal_transactions,
+        fetch_token_transfers,
+        discover_neighbors,
+        fetch_neighbor_transactions,
         fetch_balance,
     )
     from backend.ml.scorer import wallet_scorer
@@ -48,8 +56,12 @@ try:
     from backend.ml.mev_detector import detect_mev_activity
     from backend.ml.bridge_tracker import detect_bridge_usage
     from backend.ml.community_reports import (
-        submit_report, get_reports, vote_report,
-        get_recent_reports, get_flagged_addresses, get_community_risk_modifier,
+        submit_report,
+        get_reports,
+        vote_report,
+        get_recent_reports,
+        get_flagged_addresses,
+        get_community_risk_modifier,
     )
     from backend.ml.batch_analyzer import analyze_batch, parse_csv_addresses
     from backend.ml.token_scanner import scan_token
@@ -61,8 +73,11 @@ try:
 except ModuleNotFoundError:
     from ml.config import CHAIN_ID, ETHERSCAN_API_KEY, SUPPORTED_CHAINS, get_chain_by_id
     from ml.fetcher import (
-        fetch_transactions, fetch_internal_transactions,
-        fetch_token_transfers, discover_neighbors, fetch_neighbor_transactions,
+        fetch_transactions,
+        fetch_internal_transactions,
+        fetch_token_transfers,
+        discover_neighbors,
+        fetch_neighbor_transactions,
         fetch_balance,
     )
     from ml.scorer import wallet_scorer
@@ -78,8 +93,12 @@ except ModuleNotFoundError:
     from ml.mev_detector import detect_mev_activity
     from ml.bridge_tracker import detect_bridge_usage
     from ml.community_reports import (
-        submit_report, get_reports, vote_report,
-        get_recent_reports, get_flagged_addresses, get_community_risk_modifier,
+        submit_report,
+        get_reports,
+        vote_report,
+        get_recent_reports,
+        get_flagged_addresses,
+        get_community_risk_modifier,
     )
     from ml.batch_analyzer import analyze_batch, parse_csv_addresses
     from ml.token_scanner import scan_token
@@ -99,23 +118,28 @@ class ReportRequest(BaseModel):
     evidence_urls: List[str] = []
     chain_id: int = 1
 
+
 class VoteRequest(BaseModel):
     report_id: str
     vote: str  # "up" or "down"
     voter_id: str = "anonymous"
+
 
 class BatchRequest(BaseModel):
     addresses: List[str]
     chain_id: int = 1
     quick: bool = True
 
+
 class BatchCsvRequest(BaseModel):
     csv_content: str
     chain_id: int = 1
     quick: bool = True
 
+
 class ShareRequest(BaseModel):
     """Request body for creating a shareable report link."""
+
     data: dict  # Full analysis result JSON
 
 
@@ -144,11 +168,55 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+
 # ── Health Check Endpoint ───────────────────────────────────────────────────────
 @app.get("/health")
 def health_check():
     """Health check endpoint for production deployment."""
     return {"status": "healthy", "version": "4.0.0"}
+
+
+# ── Stripe Webhook Endpoint ───────────────────────────────────────────────────────
+@app.post("/api/webhook/stripe")
+async def stripe_webhook(request: Request, db=Depends(get_db)):
+    """Handle Stripe webhook events for subscription updates."""
+    payload = await request.body()
+    signature = request.headers.get("stripe-signature")
+
+    if not signature:
+        return JSONResponse(
+            {"error": "Missing stripe-signature header"}, status_code=400
+        )
+
+    try:
+        from backend.stripe_client import handle_webhook
+    except ImportError:
+        from stripe_client import handle_webhook
+
+    result = handle_webhook(payload, signature)
+
+    if (
+        result.get("status") == "success"
+        and result.get("event") == "checkout.session.completed"
+    ):
+        user_id = result.get("user_id")
+        tier = result.get("tier", "pro")
+
+        if user_id:
+            from backend.db.models import User, PremiumTier, SubscriptionStatus
+
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                try:
+                    user.premium_tier = PremiumTier(tier)
+                except ValueError:
+                    user.premium_tier = PremiumTier.PRO
+                user.subscription_status = SubscriptionStatus.ACTIVE
+                db.commit()
+                print(f"✅ Updated user {user_id} to {tier} tier")
+
+    return result
+
 
 # ── Initialize DB + register auth/watchlist routers ──────────────────────────
 init_db()
@@ -158,16 +226,26 @@ app.include_router(watchlist_router)
 
 @app.get("/")
 def home():
-    return {"status": "Kryptos Backend Running", "version": "4.0.0", "chains": len(SUPPORTED_CHAINS)}
+    return {
+        "status": "Kryptos Backend Running",
+        "version": "4.0.0",
+        "chains": len(SUPPORTED_CHAINS),
+    }
+
 
 @app.get("/chains")
 def list_chains():
     """Return all supported chains for the frontend dropdown."""
     return {"chains": SUPPORTED_CHAINS, "default": 1}
 
+
 @app.get("/analyze/{address}")
 @limiter.limit("10/minute")
-def analyze_wallet(request: Request, address: str, chain_id: int = Query(default=1, description="Chain ID to query")):
+def analyze_wallet(
+    request: Request,
+    address: str,
+    chain_id: int = Query(default=1, description="Chain ID to query"),
+):
     # ENS resolution — accept vitalik.eth or raw address
     resolved = resolve_input(address)
     if resolved["resolved"] and resolved["address"]:
@@ -182,14 +260,16 @@ def analyze_wallet(request: Request, address: str, chain_id: int = Query(default
     # Sanctions pre-check on the target itself
     sanctions_result = check_sanctions(target_address)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"🔍 Analyzing {target_address} on {chain['name']} (chainid={chain_id})")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Step 1: Fetch target wallet transactions
     print("📡 Step 1: Fetching target transactions...")
     normal_txns = fetch_transactions(target_address, chain_id, max_results=200)
-    internal_txns = fetch_internal_transactions(target_address, chain_id, max_results=100)
+    internal_txns = fetch_internal_transactions(
+        target_address, chain_id, max_results=100
+    )
     token_txns = fetch_token_transfers(target_address, chain_id, max_results=100)
 
     # Merge normal + internal for feature extraction
@@ -211,8 +291,10 @@ def analyze_wallet(request: Request, address: str, chain_id: int = Query(default
         return {
             "address": target_address,
             "chain": {
-                "id": chain["id"], "name": chain["name"],
-                "short": chain["short"], "explorer": chain["explorer"],
+                "id": chain["id"],
+                "name": chain["name"],
+                "short": chain["short"],
+                "explorer": chain["explorer"],
                 "native": chain["native"],
             },
             "risk_score": no_data_score,
@@ -226,7 +308,10 @@ def analyze_wallet(request: Request, address: str, chain_id: int = Query(default
             "internal_tx_count": 0,
             "token_transfers": len(token_txns),
             "sanctions": sanctions_result,
-            "graph": {"nodes": [{"id": target_address, "group": "suspect", "val": 20}], "links": []},
+            "graph": {
+                "nodes": [{"id": target_address, "group": "suspect", "val": 20}],
+                "links": [],
+            },
             "on_chain": {},
         }
 
@@ -241,12 +326,14 @@ def analyze_wallet(request: Request, address: str, chain_id: int = Query(default
     target_group = "suspect"
     if target_label_info:
         target_group = target_label_info["category"]
-    nodes.append({
-        "id": target_address,
-        "group": target_group,
-        "val": 20,
-        "label": target_label_info["label"] if target_label_info else None,
-    })
+    nodes.append(
+        {
+            "id": target_address,
+            "group": target_group,
+            "val": 20,
+            "label": target_label_info["label"] if target_label_info else None,
+        }
+    )
     seen_nodes.add(target_address)
 
     # Collect all counterparties for labeling
@@ -278,20 +365,24 @@ def analyze_wallet(request: Request, address: str, chain_id: int = Query(default
         if neighbor and neighbor not in seen_nodes:
             label_info = known_labels.get(neighbor)
             group = label_info["category"] if label_info else "neighbor"
-            nodes.append({
-                "id": neighbor,
-                "group": group,
-                "val": 10,
-                "label": label_info["label"] if label_info else None,
-            })
+            nodes.append(
+                {
+                    "id": neighbor,
+                    "group": group,
+                    "val": 10,
+                    "label": label_info["label"] if label_info else None,
+                }
+            )
             seen_nodes.add(neighbor)
 
-            links.append({
-                "source": tx_from,
-                "target": tx_to,
-                "value": float(tx.get("value", 0)) / 10**18,
-                "type": direction,
-            })
+            links.append(
+                {
+                    "source": tx_from,
+                    "target": tx_to,
+                    "value": float(tx.get("value", 0)) / 10**18,
+                    "type": direction,
+                }
+            )
 
     # Step 3: Discover and fetch neighbor transactions for ML context
     print("🔗 Step 3: Discovering neighbors...")
@@ -299,7 +390,9 @@ def analyze_wallet(request: Request, address: str, chain_id: int = Query(default
     print(f"   Found {len(neighbors)} top neighbors")
 
     print("📡 Step 4: Fetching neighbor transactions...")
-    neighbor_txns = fetch_neighbor_transactions(neighbors, chain_id, max_per_neighbor=50)
+    neighbor_txns = fetch_neighbor_transactions(
+        neighbors, chain_id, max_per_neighbor=50
+    )
     print(f"   Fetched data for {len(neighbor_txns)} neighbors")
 
     # Step 5: ML scoring (pre-trained IF+RF + local IF + heuristics)
@@ -320,14 +413,17 @@ def analyze_wallet(request: Request, address: str, chain_id: int = Query(default
         print(f"   Score: {risk_score}/100 ({risk_label})")
         print(f"   Local-IF: {ml_raw_score}, Heuristic: {heuristic_score}")
         if trained_model_result:
-            print(f"   Trained model → scam_prob: {trained_model_result['trained_scam_probability']:.4f}, "
-                  f"risk: {trained_model_result['trained_risk_score']}/100")
+            print(
+                f"   Trained model → scam_prob: {trained_model_result['trained_scam_probability']:.4f}, "
+                f"risk: {trained_model_result['trained_risk_score']}/100"
+            )
         else:
             print("   Trained models not available — using local-IF fallback")
         print(f"   Flags: {flags}")
     except Exception as e:
         print(f"⚠️ ML scoring error (non-fatal): {e}")
         import traceback
+
         traceback.print_exc()
         risk_score = 50
         risk_label = "Unknown"
@@ -377,7 +473,9 @@ def analyze_wallet(request: Request, address: str, chain_id: int = Query(default
     # Step 7: Build timeline data (bucketed by day)
     timeline_data = []
     if normal_txns:
-        timestamps = [int(tx.get("timeStamp", 0)) for tx in normal_txns if tx.get("timeStamp")]
+        timestamps = [
+            int(tx.get("timeStamp", 0)) for tx in normal_txns if tx.get("timeStamp")
+        ]
         if timestamps:
             day_buckets: dict[str, dict] = {}
             for tx in normal_txns:
@@ -386,7 +484,13 @@ def analyze_wallet(request: Request, address: str, chain_id: int = Query(default
                     continue
                 day = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
                 if day not in day_buckets:
-                    day_buckets[day] = {"date": day, "tx_count": 0, "volume": 0.0, "in_count": 0, "out_count": 0}
+                    day_buckets[day] = {
+                        "date": day,
+                        "tx_count": 0,
+                        "volume": 0.0,
+                        "in_count": 0,
+                        "out_count": 0,
+                    }
                 bucket = day_buckets[day]
                 bucket["tx_count"] += 1
                 bucket["volume"] += float(tx.get("value", 0)) / 1e18
@@ -403,7 +507,9 @@ def analyze_wallet(request: Request, address: str, chain_id: int = Query(default
             info = lookup_address(addr)
             mixer_interactions.append(info["label"] if info else addr)
             if f"Interacted with mixer: {info['label'] if info else addr}" not in flags:
-                flags.append(f"Interacted with mixer: {info['label'] if info else addr}")
+                flags.append(
+                    f"Interacted with mixer: {info['label'] if info else addr}"
+                )
 
     # Step 8b: Sanctions check on counterparties
     counterparty_sanctions = check_counterparty_sanctions(list(all_counterparty_addrs))
@@ -434,7 +540,9 @@ def analyze_wallet(request: Request, address: str, chain_id: int = Query(default
     community_risk = 0
 
     try:
-        gnn_result = gnn_scorer.score(target_address, all_target_txns, neighbor_txns, chain_id)
+        gnn_result = gnn_scorer.score(
+            target_address, all_target_txns, neighbor_txns, chain_id
+        )
         print(f"   GNN score: {gnn_result.get('gnn_score', '?')}")
     except Exception as e:
         print(f"   GNN scoring error (non-fatal): {e}")
@@ -500,7 +608,7 @@ def analyze_wallet(request: Request, address: str, chain_id: int = Query(default
         print(f"⚠️ On-chain write failed (non-fatal): {e}")
         on_chain = {"error": str(e)}
 
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     return {
         "address": target_address,
@@ -523,14 +631,13 @@ def analyze_wallet(request: Request, address: str, chain_id: int = Query(default
         "sanctions": sanctions_result,
         "counterparty_sanctions": counterparty_sanctions,
         "chain": {
-            "id": chain["id"], "name": chain["name"],
-            "short": chain["short"], "explorer": chain["explorer"],
+            "id": chain["id"],
+            "name": chain["name"],
+            "short": chain["short"],
+            "explorer": chain["explorer"],
             "native": chain["native"],
         },
-        "graph": {
-            "nodes": nodes,
-            "links": links
-        },
+        "graph": {"nodes": nodes, "links": links},
         "gnn": gnn_result,
         "temporal": temporal_result,
         "mev": mev_result,
@@ -542,7 +649,11 @@ def analyze_wallet(request: Request, address: str, chain_id: int = Query(default
 
 @app.get("/balance/{address}")
 @limiter.limit("30/minute")
-def get_balance(request: Request, address: str, chain_id: int = Query(default=1, description="Chain ID")):
+def get_balance(
+    request: Request,
+    address: str,
+    chain_id: int = Query(default=1, description="Chain ID"),
+):
     """Fetch current native token balance for a wallet."""
     chain = get_chain_by_id(chain_id)
     bal = fetch_balance(address.lower(), chain_id)
@@ -565,6 +676,7 @@ def get_on_chain_report(address: str):
 
 
 # ── New Endpoints (v3.0) ────────────────────────────────────────────────────
+
 
 @app.get("/resolve/{name}")
 def resolve_name(name: str):
@@ -655,6 +767,7 @@ def download_pdf_report(address: str, chain_id: int = Query(default=1)):
 
 # ── Advanced Endpoints (v4.0) ───────────────────────────────────────────────
 
+
 @app.get("/gnn/{address}")
 def gnn_analysis(address: str, chain_id: int = Query(default=1)):
     """Run Graph Neural Network scoring on a wallet's transaction sub-graph."""
@@ -665,7 +778,9 @@ def gnn_analysis(address: str, chain_id: int = Query(default=1)):
     if not all_txns:
         return {"address": target, "gnn_score": 0, "error": "No transactions found"}
     neighbors = discover_neighbors(target, all_txns, max_neighbors=8)
-    neighbor_txns = fetch_neighbor_transactions(neighbors, chain_id, max_per_neighbor=50)
+    neighbor_txns = fetch_neighbor_transactions(
+        neighbors, chain_id, max_per_neighbor=50
+    )
     result = gnn_scorer.score(target, all_txns, neighbor_txns, chain_id)
     result["address"] = target
     return result
@@ -677,7 +792,11 @@ def temporal_analysis(address: str, chain_id: int = Query(default=1)):
     target = address.lower()
     txns = fetch_transactions(target, chain_id, max_results=500)
     if not txns:
-        return {"address": target, "temporal_risk_score": 0, "error": "No transactions found"}
+        return {
+            "address": target,
+            "temporal_risk_score": 0,
+            "error": "No transactions found",
+        }
     result = detect_temporal_anomalies(target, txns)
     result["address"] = target
     return result
@@ -689,7 +808,12 @@ def mev_analysis(address: str, chain_id: int = Query(default=1)):
     target = address.lower()
     txns = fetch_transactions(target, chain_id, max_results=500)
     if not txns:
-        return {"address": target, "mev_risk_score": 0, "is_mev_bot": False, "error": "No transactions found"}
+        return {
+            "address": target,
+            "mev_risk_score": 0,
+            "is_mev_bot": False,
+            "error": "No transactions found",
+        }
     result = detect_mev_activity(target, txns)
     result["address"] = target
     return result
@@ -707,6 +831,7 @@ def bridge_analysis(address: str, chain_id: int = Query(default=1)):
 
 
 # ── Community Reports ───────────────────────────────────────────────────────
+
 
 @app.post("/community/report")
 @limiter.limit("5/minute")
@@ -748,6 +873,7 @@ def flagged_addresses(min_reports: int = Query(default=2, ge=1)):
 
 # ── Batch Analysis ──────────────────────────────────────────────────────────
 
+
 @app.post("/batch")
 @limiter.limit("3/minute")
 def batch_analysis(request: Request, req: BatchRequest):
@@ -761,28 +887,40 @@ def batch_analysis(request: Request, req: BatchRequest):
 
 # ── Token Risk Scanner ───────────────────────────────────────────────────────
 
+
 @app.get("/token-scan/{address}")
 @limiter.limit("10/minute")
-def token_risk_scan(request: Request, address: str, chain_id: int = Query(default=1, description="Chain ID")):
+def token_risk_scan(
+    request: Request,
+    address: str,
+    chain_id: int = Query(default=1, description="Chain ID"),
+):
     """Scan an ERC-20 token contract for risk signals."""
     try:
         return scan_token(address.lower(), chain_id)
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return {"error": str(e), "contract_address": address.lower()}
 
 
 # ── Contract Auditor ─────────────────────────────────────────────────────────
 
+
 @app.get("/contract-audit/{address}")
 @limiter.limit("5/minute")
-def contract_security_audit(request: Request, address: str, chain_id: int = Query(default=1, description="Chain ID")):
+def contract_security_audit(
+    request: Request,
+    address: str,
+    chain_id: int = Query(default=1, description="Chain ID"),
+):
     """Run a static security audit on a smart contract."""
     try:
         return audit_contract(address.lower(), chain_id)
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return {"error": str(e), "contract_address": address.lower()}
 
@@ -803,18 +941,23 @@ def batch_csv_analysis(request: Request, req: BatchCsvRequest):
 
 # ── Wallet Watchlist ─────────────────────────────────────────────────────────
 
+
 @app.get("/watchlist/quick-score/{address}")
-def watchlist_quick_score(address: str, chain_id: int = Query(default=1, description="Chain ID")):
+def watchlist_quick_score(
+    address: str, chain_id: int = Query(default=1, description="Chain ID")
+):
     """Lightweight wallet risk check for watchlist monitoring."""
     try:
         return quick_score(address.lower(), chain_id)
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         return {"error": str(e), "address": address.lower()}
 
 
 # ── Shareable Report Links ──────────────────────────────────────────────────
+
 
 @app.post("/share")
 def create_shared_report(req: ShareRequest, db=Depends(get_db)):
@@ -824,8 +967,14 @@ def create_shared_report(req: ShareRequest, db=Depends(get_db)):
     """
     data = req.data
     address = data.get("address", "unknown")
-    chain_id = data.get("chain", {}).get("id", 1) if isinstance(data.get("chain"), dict) else 1
-    chain_name = data.get("chain", {}).get("name", "Ethereum") if isinstance(data.get("chain"), dict) else "Ethereum"
+    chain_id = (
+        data.get("chain", {}).get("id", 1) if isinstance(data.get("chain"), dict) else 1
+    )
+    chain_name = (
+        data.get("chain", {}).get("name", "Ethereum")
+        if isinstance(data.get("chain"), dict)
+        else "Ethereum"
+    )
     risk_score = data.get("risk_score", 0)
     risk_label = data.get("risk_label", "Unknown")
 

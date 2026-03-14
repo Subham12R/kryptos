@@ -29,7 +29,7 @@ declare global {
 }
 
 export async function requestNonce(address: string): Promise<NonceResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/nonce`, {
+  const response = await fetch(`${API_BASE_URL}/auth/wallet/nonce`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ address }),
@@ -48,7 +48,7 @@ export async function verifySignature(
   signature: string,
   message: string
 ): Promise<VerifyResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+  const response = await fetch(`${API_BASE_URL}/auth/wallet/verify`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ address, signature, message }),

@@ -5,7 +5,22 @@ import { motion } from "framer-motion"
 
 export default function RiskGauge({ score = 32, label = "LOW RISK" }: { score?: number; label?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [animatedScore, setAnimatedScore] = useState(0)
+  const [size, setSize] = useState(180)
+
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.clientWidth
+        const newSize = Math.min(containerWidth - 40, 200)
+        setSize(newSize)
+      }
+    }
+    updateSize()
+    window.addEventListener("resize", updateSize)
+    return () => window.removeEventListener("resize", updateSize)
+  }, [])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -15,7 +30,6 @@ export default function RiskGauge({ score = 32, label = "LOW RISK" }: { score?: 
     if (!ctx) return
 
     const dpr = window.devicePixelRatio || 1
-    const size = 180
     canvas.width = size * dpr
     canvas.height = size * dpr
     canvas.style.width = `${size}px`
@@ -97,10 +111,11 @@ export default function RiskGauge({ score = 32, label = "LOW RISK" }: { score?: 
 
   return (
     <motion.div
+      ref={containerRef}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
-      className="flex flex-col items-center justify-center rounded-xl border border-[#1A1A1A] bg-[#0A0A0A] p-6"
+      className="flex aspect-[4/3] flex-col items-center justify-center rounded-xl border border-[#1A1A1A] bg-[#0A0A0A] p-4 lg:p-6"
     >
       <h3 className="mb-4 text-sm font-medium text-gray-400">Wallet Risk Gauge</h3>
 
@@ -120,12 +135,9 @@ export default function RiskGauge({ score = 32, label = "LOW RISK" }: { score?: 
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-4 flex items-center justify-center">
         <div className="rounded-full bg-white px-3 py-1 text-xs font-medium text-black">
           {label}
-        </div>
-        <div className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white">
-          GOAT Rating
         </div>
       </div>
 

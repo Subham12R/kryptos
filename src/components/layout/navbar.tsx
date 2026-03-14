@@ -3,22 +3,26 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useWallet, formatAddress } from "@/lib/wallet";
+import { useSession } from "@/lib/session";
 import { Loader2, LayoutDashboard } from "lucide-react";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [isProfileConnected, setIsProfileConnected] = useState(true);
-  const { address, isConnected, isConnecting, connect, disconnect, error } = useWallet();
+  const { isAuthenticated, user } = useSession();
+  const { address, isConnected, isConnecting, connect, disconnect, error } =
+    useWallet();
+
+  const isProfileConnected = isAuthenticated || isConnected;
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
-    
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const handleConnect = async () => {
@@ -30,10 +34,12 @@ export default function Navbar() {
   };
 
   return (
-    <nav 
+    <nav
       className="font-array sticky top-0 z-50 w-full px-6 py-3 text-lg transition-all duration-500"
       style={{
-        backgroundColor: scrolled ? 'rgba(0, 0, 0, 0.95)' : 'rgba(0, 0, 0, 0.3)',
+        backgroundColor: scrolled
+          ? "rgba(0, 0, 0, 0.95)"
+          : "rgba(0, 0, 0, 0.3)",
         backdropFilter: `blur(${scrolled ? 24 : 16}px) saturate(180%)`,
         WebkitBackdropFilter: `blur(${scrolled ? 24 : 16}px) saturate(180%)`,
       }}
@@ -43,30 +49,23 @@ export default function Navbar() {
           <Link
             href="/"
             className="tracking-tight transition-all hover:opacity-50"
-            style={{ color: '#E5E7EB' }}
+            style={{ color: "#E5E7EB" }}
           >
             Home
           </Link>
           <Link
-            href="/wallet-scanner"
+            href="/team"
             className="tracking-tight transition-all hover:opacity-50"
-            style={{ color: '#E5E7EB' }}
+            style={{ color: "#E5E7EB" }}
           >
-            Analyze
-          </Link>
-          <Link
-            href="/services"
-            className="tracking-tight transition-all hover:opacity-50"
-            style={{ color: '#E5E7EB' }}
-          >
-            Services
+            Team
           </Link>
         </div>
 
         <Link
           href="/"
           className="font-quicktext flex items-center justify-center px-2 py-1 text-[1.5rem] leading-none"
-          style={{ color: '#E5E7EB' }}
+          style={{ color: "#E5E7EB" }}
           aria-label="Kryptos home"
         >
           Kryptos
@@ -76,19 +75,19 @@ export default function Navbar() {
           <Link
             href="/pricing"
             className="tracking-tight transition-all hover:opacity-50"
-            style={{ color: '#E5E7EB' }}
+            style={{ color: "#E5E7EB" }}
           >
             Pricing
           </Link>
           <Link
             href="/docs"
             className="tracking-tight transition-all hover:opacity-50"
-            style={{ color: '#E5E7EB' }}
+            style={{ color: "#E5E7EB" }}
           >
             Docs
           </Link>
-          
-          {isProfileConnected ? (
+
+          {isConnected || isProfileConnected ? (
             <Link
               href="/dashboard"
               className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition-all"
@@ -97,27 +96,21 @@ export default function Navbar() {
               Dashboard
             </Link>
           ) : (
-            <button
-              onClick={handleConnect}
-              disabled={isConnecting}
-              className="rounded-full px-5 py-2 text-sm tracking-tight transition-all duration-300 hover:opacity-80 disabled:opacity-50"
-              style={{ 
-                backgroundColor: '#E5E7EB', 
-                color: '#000000',
-                border: '1px solid #333333'
+            <Link
+              href="/auth"
+              className="rounded-full px-5 py-2 text-sm tracking-tight transition-all duration-300 hover:opacity-80"
+              style={{
+                backgroundColor: "#E5E7EB",
+                color: "#000000",
+                border: "1px solid #333333",
               }}
             >
-              {isConnecting ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Connecting...
-                </span>
-              ) : "Connect"}
-            </button>
+              Get Started
+            </Link>
           )}
         </div>
       </div>
-      
+
       {error && (
         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-400">
           {error}
